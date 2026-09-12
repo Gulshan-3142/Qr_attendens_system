@@ -132,7 +132,7 @@ fun ProfileScreen(
                 }
 
                 Text(
-                    text = "Use 10.138.216.222for Android Studio Emulator or your local Wi-Fi IP for real devices.",
+                    text = "The app is connected to the deployed backend server.",
                     fontSize = 12.sp,
                     color = Slate400
                 )

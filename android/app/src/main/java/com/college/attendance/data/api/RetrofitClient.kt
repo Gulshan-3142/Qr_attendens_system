@@ -10,7 +10,7 @@ object RetrofitClient {
 
     // 192.168.0.104 connects physical devices on the same Wi-Fi network as your Mac
     // 10.0.2.2 is also supported for standard Android Studio Emulator
-    private var baseUrl = "http://192.168.0.104:3000/api/"
+    private var baseUrl = "https://qr-attendens-system.onrender.com/api/"
     private var authToken: String? = null
 
     fun setBaseUrl(url: String) {

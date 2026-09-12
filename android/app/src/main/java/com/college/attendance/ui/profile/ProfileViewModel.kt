@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 
 data class ProfileUiState(
     val student: StudentDto? = null,
-    val backendUrl: String = "http://10.138.216.222:3000/api/"
+    val backendUrl: String = "https://qr-attendens-system.onrender.com/api/"
 )
 
 class ProfileViewModel(

@@ -38,7 +38,8 @@ class SessionManager(context: Context) {
 
     fun isStudentVerified(): Boolean = prefs.getBoolean(KEY_IS_VERIFIED, false)
 
-    fun getBackendUrl(): String = prefs.getString(KEY_BACKEND_URL, "http://192.168.0.104:3000/api/") ?: "http://192.168.0.104:3000/api/"
+    fun getBackendUrl(): String = prefs.getString(KEY_BACKEND_URL, "https://qr-attendens-system.onrender.com/api/"
+    ) ?: "https://qr-attendens-system.onrender.com/api/"
 
     fun setBackendUrl(url: String) {
         prefs.edit().putString(KEY_BACKEND_URL, url).apply()
