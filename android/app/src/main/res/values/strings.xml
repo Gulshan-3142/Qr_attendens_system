@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">SmartQR Attendance</string>
+    <string name="student_verification">Student Onboarding</string>
+    <string name="scan_attendance_qr">Scan Attendance QR</string>
+</resources>

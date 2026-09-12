@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartQR Attendance — Teacher & Admin Portal</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.05); opacity: 0.4; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+    .pulse-ring { animation: pulse-ring 2s infinite ease-in-out; }
+    .qr-container { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
+
+  <!-- Top Navbar -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+          <i data-lucide="qr-code" class="w-5 h-5 text-white"></i>
+        </div>
+        <div>
+          <h1 class="text-base font-bold text-white tracking-tight flex items-center gap-2">
+            SmartQR Attendance
+            <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 font-medium border border-indigo-500/30">Faculty Portal</span>
+          </h1>
+          <p class="text-xs text-slate-400">Department of Computer Science & Engineering</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <a href="/student.html" target="_blank" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 border border-indigo-500/30 text-xs font-semibold transition-all">
+          <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
+          <span>Open Student Portal / App</span>
+        </a>
+        <div id="authHeaderState" class="flex items-center space-x-4">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <!-- Login View (If not logged in) -->
+    <div id="loginView" class="max-w-md mx-auto my-12 bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl">
+      <div class="text-center mb-6">
+        <div class="w-12 h-12 rounded-2xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center mx-auto mb-3">
+          <i data-lucide="shield-check" class="w-6 h-6"></i>
+        </div>
+        <h2 class="text-xl font-bold text-white">Faculty Sign In</h2>
+        <p class="text-sm text-slate-400 mt-1">Access attendance sessions and live QR generator</p>
+      </div>
+
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Faculty Email</label>
+          <input type="email" id="loginEmail" value="rajesh.kumar@college.edu" required
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500 transition-colors" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Password</label>
+          <input type="password" id="loginPassword" value="password123" required
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500 transition-colors" />
+        </div>
+        <button type="submit" class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold shadow-lg shadow-indigo-600/25 transition-all">
+          Sign In to Portal
+        </button>
+      </form>
+
+      <div class="mt-6 pt-6 border-t border-slate-800 text-center">
+        <p class="text-xs text-slate-500">Demo Credentials: <code class="text-indigo-400 font-mono">rajesh.kumar@college.edu</code> / <code class="text-indigo-400 font-mono">password123</code></p>
+      </div>
+    </div>
+
+    <!-- Teacher Dashboard View -->
+    <div id="dashboardView" class="hidden space-y-8">
+      
+      <!-- Top Action Bar -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6">
+        <div>
+          <div class="flex items-center gap-3">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <h2 id="teacherGreeting" class="text-lg font-bold text-white">Welcome, Dr. Rajesh Kumar</h2>
+          </div>
+          <p class="text-sm text-slate-400 mt-1">Manage dynamic QR sessions, geofence radius, and view real-time student check-ins.</p>
+        </div>
+        
+        <div class="flex items-center gap-3">
+          <button id="btnNewSession" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold shadow-lg shadow-indigo-600/20 transition-all">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            <span>Create New Session</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Active Session Live Studio -->
+      <div id="activeSessionPanel" class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left: Projector-Ready Dynamic QR Code (5 cols) -->
+        <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-3xl p-6 flex flex-col items-center justify-between relative overflow-hidden shadow-2xl">
+          <div class="w-full flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-ping"></span>
+                LIVE ATTENDANCE
+              </span>
+            </div>
+            <div class="text-xs text-slate-400 flex items-center gap-1">
+              <i data-lucide="map-pin" class="w-3.5 h-3.5 text-indigo-400"></i>
+              <span id="sessionRadiusBadge">Radius: 20m</span>
+            </div>
+          </div>
+
+          <!-- Session Subject & Room Header -->
+          <div class="text-center mb-4">
+            <h3 id="sessionSubjectTitle" class="text-xl font-extrabold text-white tracking-tight">Data Structures & Algorithms</h3>
+            <p id="sessionRoomSubtitle" class="text-xs text-slate-400 mt-0.5">LH-301 (CSE Wing) • Room GPS: 28.6139° N, 77.2090° E</p>
+          </div>
+
+          <!-- Dynamic QR Image Card -->
+          <div class="relative bg-white p-5 rounded-2xl shadow-xl shadow-indigo-500/10 qr-container flex flex-col items-center">
+            <img id="dynamicQrImage" src="" alt="Dynamic Attendance QR" class="w-64 h-64 object-contain rounded-lg" />
+            <div class="mt-3 flex items-center gap-2 text-slate-800 text-xs font-mono font-medium">
+              <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
+              <span>Signed & Geofence Protected</span>
+            </div>
+          </div>
+
+          <!-- Rotating Countdown Bar -->
+          <div class="w-full mt-6 space-y-2">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-slate-400 flex items-center gap-1.5">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-indigo-400 animate-spin"></i>
+                Rotating QR in <strong id="countdownSeconds" class="text-white font-mono">60</strong>s
+              </span>
+              <button id="btnManualRefreshQr" class="text-indigo-400 hover:text-indigo-300 font-medium">
+                Force Refresh
+              </button>
+            </div>
+            <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <div id="countdownProgressBar" class="h-full bg-gradient-to-r from-indigo-500 to-emerald-400 transition-all duration-1000 ease-linear" style="width: 100%;"></div>
+            </div>
+          </div>
+
+          <div class="w-full mt-6 pt-4 border-t border-slate-800 flex items-center justify-between gap-3">
+            <button id="btnEndSession" class="flex-1 py-2 px-3 rounded-xl bg-rose-600/10 hover:bg-rose-600/20 text-rose-400 border border-rose-500/30 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5">
+              <i data-lucide="stop-circle" class="w-4 h-4"></i>
+              End Session
+            </button>
+            <button id="btnExportCsv" class="flex-1 py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition-colors flex items-center justify-center gap-1.5">
+              <i data-lucide="download" class="w-4 h-4"></i>
+              Export CSV
+            </button>
+          </div>
+        </div>
+
+        <!-- Right: Real-time Attendance Metrics & Feed (7 cols) -->
+        <div class="lg:col-span-7 space-y-6">
+          
+          <!-- Metric Stat Cards -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+              <p class="text-xs text-slate-400 uppercase font-semibold">Total Students</p>
+              <h4 id="statTotalStudents" class="text-2xl font-bold text-white mt-1">60</h4>
+              <span class="text-[11px] text-slate-500">Enrolled Batch</span>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+              <p class="text-xs text-emerald-400 uppercase font-semibold">Present</p>
+              <h4 id="statPresentStudents" class="text-2xl font-bold text-emerald-400 mt-1">48</h4>
+              <span class="text-[11px] text-emerald-500/80">Marked On-Site</span>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+              <p class="text-xs text-rose-400 uppercase font-semibold">Absent</p>
+              <h4 id="statAbsentStudents" class="text-2xl font-bold text-rose-400 mt-1">12</h4>
+              <span class="text-[11px] text-rose-500/80">Pending/Out of zone</span>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+              <p class="text-xs text-indigo-400 uppercase font-semibold">Attendance</p>
+              <h4 id="statAttendancePercent" class="text-2xl font-bold text-indigo-400 mt-1">80.0%</h4>
+              <span class="text-[11px] text-indigo-500/80">Live Turnout</span>
+            </div>
+          </div>
+
+          <!-- Live Student Roster & Check-in Feed -->
+          <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h4 class="text-base font-bold text-white">Live Student Roster</h4>
+                <p class="text-xs text-slate-400">Real-time GPS verified student attendance records</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <input type="text" id="rosterSearch" placeholder="Search roll no or name..." 
+                  class="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
+              </div>
+            </div>
+
+            <!-- Student Table -->
+            <div class="overflow-x-auto max-h-[380px] overflow-y-auto rounded-xl border border-slate-800">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-950 text-slate-400 uppercase font-semibold sticky top-0 z-10 border-b border-slate-800">
+                  <tr>
+                    <th class="py-3 px-4">Student</th>
+                    <th class="py-3 px-4">Roll No</th>
+                    <th class="py-3 px-4">Status</th>
+                    <th class="py-3 px-4">Device Binding</th>
+                    <th class="py-3 px-4">GPS Distance</th>
+                    <th class="py-3 px-4">Time</th>
+                    <th class="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="rosterTableBody" class="divide-y divide-slate-800 text-slate-300">
+                  <!-- Injected via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Create Session Modal -->
+  <div id="modalCreateSession" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-indigo-600/20 text-indigo-400 flex items-center justify-center">
+            <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+          </div>
+          <h3 class="text-base font-bold text-white">Create Attendance Session</h3>
+        </div>
+        <button id="btnCloseModal" class="text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="createSessionForm" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Subject</label>
+          <select id="sessionSubjectSelect" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500">
+            <option value="sub_dsa">Data Structures & Algorithms (CS601)</option>
+            <option value="sub_dbms">Database Management Systems (CS602)</option>
+            <option value="sub_os">Operating Systems (CS603)</option>
+            <option value="sub_cn">Computer Networks (CS604)</option>
+            <option value="sub_math">Mathematics for CS (CS605)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Classroom / Hall Name</label>
+          <input type="text" id="sessionRoomName" value="LH-301 (CSE Wing)" required
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Classroom Latitude</label>
+            <input type="number" step="0.000001" id="sessionLat" value="28.613900" required
+              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500 font-mono" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Classroom Longitude</label>
+            <input type="number" step="0.000001" id="sessionLng" value="77.209000" required
+              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500 font-mono" />
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between bg-slate-950 p-3 rounded-xl border border-slate-800">
+          <span class="text-xs text-slate-400 flex items-center gap-1.5">
+            <i data-lucide="crosshair" class="w-4 h-4 text-indigo-400"></i>
+            Use device's current GPS location
+          </span>
+          <button type="button" id="btnUseCurrentGps" class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold">
+            Get Current GPS
+          </button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Allowed Radius</label>
+            <select id="sessionRadiusSelect" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500">
+              <option value="15">15 meters (Strict Room)</option>
+              <option value="20" selected>20 meters (Default Standard)</option>
+              <option value="35">35 meters (Large Auditorium)</option>
+              <option value="50">50 meters (Department Zone)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">QR Rolling Validity</label>
+            <select id="sessionValiditySelect" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500">
+              <option value="10" selected>10 seconds (Live Testing / Fast)</option>
+              <option value="30">30 seconds (High Security)</option>
+              <option value="60">60 seconds (Recommended)</option>
+              <option value="120">120 seconds</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="pt-2">
+          <button type="submit" class="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold shadow-lg shadow-indigo-600/25 transition-all flex items-center justify-center gap-2">
+            <i data-lucide="check" class="w-4 h-4"></i>
+            Launch Dynamic QR Session
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- App Script -->
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+
+# Node
+node_modules/
+
+# Environment variables
+.env
+.env.*
+
+# Android
+.gradle/
+build/
+**/build/
+local.properties
+*.iml
+.kotlin/
+*.db
+*.db-shm
+*.db-wal
