@@ -159,10 +159,7 @@
               <i data-lucide="stop-circle" class="w-4 h-4"></i>
               End Session
             </button>
-            <button id="btnExportCsv" class="flex-1 py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition-colors flex items-center justify-center gap-1.5">
-              <i data-lucide="download" class="w-4 h-4"></i>
-              Export CSV
-            </button>
+            
           </div>
         </div>
 
@@ -325,6 +322,48 @@
     </div>
   </div>
 
+/////////////////////////
+
+  <!-- End Session Confirmation Modal -->
+<div id="modalEndSession"
+  class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
+
+  <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl">
+
+    <div class="flex items-center gap-3 mb-5">
+      <div class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center">
+        <i data-lucide="stop-circle" class="w-5 h-5"></i>
+      </div>
+
+     
+    </div>
+
+    <div class="space-y-2.5">
+
+      <button id="btnExportAndEnd"
+        class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2">
+        <i data-lucide="download" class="w-4 h-4"></i>
+        Export CSV & End Session
+      </button>
+
+      <button id="btnEndWithoutExport"
+        class="w-full py-2.5 px-4 rounded-xl bg-rose-600/10 hover:bg-rose-600/20 text-rose-400 border border-rose-500/30 text-sm font-semibold transition-all flex items-center justify-center gap-2">
+        <i data-lucide="stop-circle" class="w-4 h-4"></i>
+        End Without Export
+      </button>
+
+      <button id="btnCancelEndSession"
+        class="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold transition-all">
+        Cancel
+      </button>
+
+    </div>
+  </div>
+</div>
+
+
+
+//////////////////////////////
   <!-- App Script -->
   <script src="/app.js"></script>
 </body>

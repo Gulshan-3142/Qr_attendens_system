@@ -58,8 +58,16 @@ function setupEventListeners() {
   // End Session
   document.getElementById('btnEndSession').addEventListener('click', handleEndSession);
 
-  // Export CSV
-  document.getElementById('btnExportCsv').addEventListener('click', exportAttendanceCsv);
+
+  ////////////////////
+  document.getElementById('btnExportAndEnd').addEventListener('click', handleExportAndEnd);
+
+  document.getElementById('btnEndWithoutExport').addEventListener('click', handleEndWithoutExport);
+
+  document.getElementById('btnCancelEndSession').addEventListener('click', closeEndSessionModal);
+  // /////////////////////
+
+
 
   // Get device GPS for session creator
   document.getElementById('btnUseCurrentGps').addEventListener('click', () => {
@@ -207,7 +215,7 @@ async function handleCreateSession(e) {
   e.preventDefault();
   const subjectId = document.getElementById('sessionSubjectSelect').value;
   const roomName = document.getElementById('sessionRoomName').value;
-  const latitude =  28.4660931;//parseFloat(document.getElementById('sessionLat').value);
+  const latitude = 28.4660931;//parseFloat(document.getElementById('sessionLat').value);
   const longitude = 77.5072981;//parseFloat(document.getElementById('sessionLng').value);
   const allowedRadiusMeters = 1000;
   const qrValiditySeconds = parseInt(document.getElementById('sessionValiditySelect').value);
@@ -392,7 +400,7 @@ function renderRosterTable(students) {
   if (window.lucide) lucide.createIcons();
 }
 
-window.resetDeviceBinding = async function(studentId, studentName) {
+window.resetDeviceBinding = async function (studentId, studentName) {
   if (!confirm(`Are you sure you want to RESET the device binding for ${studentName}?\n\nThis will remove the current hardware lock so the student can register their new mobile device.`)) {
     return;
   }
@@ -418,7 +426,7 @@ window.resetDeviceBinding = async function(studentId, studentName) {
   }
 };
 
-window.toggleStudentAttendance = async function(studentId, status) {
+window.toggleStudentAttendance = async function (studentId, status) {
   if (!currentSession) return;
   try {
     const res = await fetch(`/api/teacher/sessions/${currentSession.id}/manual-attendance`, {
@@ -456,40 +464,163 @@ function connectSseStream(sessionId) {
   };
 }
 
-async function handleEndSession() {
-  if (!currentSession || !confirm('Are you sure you want to end this attendance session?')) return;
+// async function handleEndSession() {
+//   if (!currentSession || !confirm('Are you sure you want to end this attendance session?')) return;
+//   try {
+//     const res = await fetch(`/api/teacher/sessions/${currentSession.id}/close`, {
+//       method: 'POST',
+//       headers: { 'Authorization': `Bearer ${currentTeacherToken}` }
+//     });
+//     const data = await res.json();
+//     if (data.success) {
+//       clearInterval(countdownTimer);
+//       alert('Class attendance session closed.');
+//       loadActiveSession();
+//     }
+//   } catch (err) {
+//     alert('Failed to close session.');
+//   }
+// }
+
+////////////////////////////////////
+function handleEndSession() {
+  if (!currentSession) return;
+
+  const modal = document.getElementById('modalEndSession');
+
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+
+  if (window.lucide) {
+    lucide.createIcons();
+  }
+}
+
+async function closeCurrentSession() {
+  if (!currentSession) return;
+
   try {
-    const res = await fetch(`/api/teacher/sessions/${currentSession.id}/close`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${currentTeacherToken}` }
-    });
+    const res = await fetch(
+      `/api/teacher/sessions/${currentSession.id}/close`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${currentTeacherToken}`
+        }
+      }
+    );
+
     const data = await res.json();
+
     if (data.success) {
       clearInterval(countdownTimer);
+
       alert('Class attendance session closed.');
+
       loadActiveSession();
+    } else {
+      alert('Failed to close session.');
     }
+
   } catch (err) {
+    console.error('Close session error:', err);
     alert('Failed to close session.');
   }
 }
 
-function exportAttendanceCsv() {
-  if (!currentRoster || currentRoster.length === 0) {
-    alert('No attendance data to export.');
+
+///////////////////////////
+function closeEndSessionModal() {
+  const modal = document.getElementById('modalEndSession');
+
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+
+async function handleExportAndEnd() {
+  if (!currentSession) return;
+
+  const exported = exportAttendanceCsv();
+
+  if (!exported) {
     return;
   }
 
-  let csvContent = 'data:text/csv;charset=utf-8,Student Name,Roll Number,College ID,Status,Distance (Meters),Marked Time\n';
-  currentRoster.forEach(st => {
-    csvContent += `"${st.name}","${st.rollNumber}","${st.collegeId}","${st.status}","${st.distanceMeters || ''}","${st.markedAt || ''}"\n`;
-  });
+  closeEndSessionModal();
 
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement('a');
-  link.setAttribute('href', encodedUri);
-  link.setAttribute('download', `Attendance_${currentSession ? currentSession.room_name : 'Report'}_${new Date().toISOString().split('T')[0]}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  await closeCurrentSession();
 }
+
+
+async function handleEndWithoutExport() {
+  if (!currentSession) return;
+
+  const confirmed = confirm(
+    'Are you sure you want to end the session without exporting attendance CSV?'
+  );
+
+  if (!confirmed) return;
+
+  closeEndSessionModal();
+
+  await closeCurrentSession();
+}
+
+/////////////////////////////
+
+function exportAttendanceCsv() {
+  if (!currentRoster || currentRoster.length === 0) {
+    alert('No attendance data to export.');
+    return false;
+  }
+
+  try {
+    let csvContent =
+      'data:text/csv;charset=utf-8,Student Name,Roll Number,College ID,Status,Distance (Meters),Marked Time\n';
+
+    currentRoster.forEach(st => {
+      csvContent += `"${st.name}","${st.rollNumber}","${st.collegeId}","${st.status}","${st.distanceMeters || ''}","${st.markedAt || ''}"\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute(
+      'download',
+      `Attendance_${currentSession ? currentSession.room_name : 'Report'}_${new Date().toISOString().split('T')[0]}.csv`
+    );
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    return true;
+
+  } catch (err) {
+    console.error('CSV export failed:', err);
+    alert('Failed to export attendance CSV. Session is still active.');
+    return false;
+  }
+}
+
+// function exportAttendanceCsv() {
+//   if (!currentRoster || currentRoster.length === 0) {
+//     alert('No attendance data to export.');
+//     return;
+//   }
+
+//   let csvContent = 'data:text/csv;charset=utf-8,Student Name,Roll Number,College ID,Status,Distance (Meters),Marked Time\n';
+//   currentRoster.forEach(st => {
+//     csvContent += `"${st.name}","${st.rollNumber}","${st.collegeId}","${st.status}","${st.distanceMeters || ''}","${st.markedAt || ''}"\n`;
+//   });
+
+//   const encodedUri = encodeURI(csvContent);
+//   const link = document.createElement('a');
+//   link.setAttribute('href', encodedUri);
+//   link.setAttribute('download', `Attendance_${currentSession ? currentSession.room_name : 'Report'}_${new Date().toISOString().split('T')[0]}.csv`);
+//   document.body.appendChild(link);
+//   link.click();
+//   document.body.removeChild(link);
+// }
