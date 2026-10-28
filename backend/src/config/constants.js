@@ -12,6 +12,6 @@ export const APP_CONFIG = {
   QR_SIGNING_SECRET: process.env.QR_SIGNING_SECRET || 'qr_hmac_sign_key_99218274_prod',
   
   // Campus Baseline Coordinates (Default: Computer Science & Engineering Building)
-  CAMPUS_DEFAULT_LAT: 28.6139,
-  CAMPUS_DEFAULT_LNG: 77.2090
+  CAMPUS_DEFAULT_LAT: 28.47297174232391,
+  CAMPUS_DEFAULT_LNG: 77.48848218074134
 };
